@@ -1,0 +1,28 @@
+<script>
+  const logSection = document.getElementById('log-section');
+  const socket = new WebSocket('ws://localhost:8080/log');
+
+  socket.onmessage = function(event) {
+      logSection.innerText += event.data + '\n';
+      logSection.scrollTop = logSection.scrollHeight; // Auto-scroll to the latest log
+  };
+
+  const form = document.getElementById('task-form');
+  form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      document.querySelector('.loader').style.display = 'block';
+      fetch('/execute', {
+          method: 'POST',
+          body: new FormData(form)
+      }).then(response => response.json())
+        .then(data => {
+            document.querySelector('.loader').style.display = 'none';
+            if (data.success) {
+                document.getElementById('download-link').style.display = 'block';
+                document.getElementById('download-link').href = data.downloadUrl;
+            } else {
+                logSection.innerText += "Error occurred.\n";
+            }
+        });
+  });
+</script>

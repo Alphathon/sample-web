@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Execution</title>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" />
+    <style>
+        .loader { display: none; }
+        #log-section { height: 200px; overflow-y: scroll; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Task Executor</h2>
+    <form id="task-form">
+        <div class="mb-3">
+            <label for="username" class="form-label">Username:</label>
+            <input type="text" class="form-control" id="username" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password:</label>
+            <input type="password" class="form-control" id="password" required>
+        </div>
+        <div class="mb-3">
+            <label for="dropdown" class="form-label">Select Option:</label>
+            <select class="form-control" id="dropdown">
+                <option th:each="option : ${options}" th:text="${option}"></option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <div class="loader">Loading...</div>
+    <div id="log-section"></div>
+    <a id="download-link" href="#" style="display:none;">Download Result</a>
+</div>
+
+<script src="/webjars/bootstrap/5.3.0/js/bootstrap.min.js"></script>
+<script>
+    const form = document.getElementById('task-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        document.querySelector('.loader').style.display = 'block';
+        fetch('/execute', {
+            method: 'POST',
+            body: new FormData(form)
+        }).then(response => response.json())
+          .then(data => {
+              document.querySelector('.loader').style.display = 'none';
+              if (data.success) {
+                  document.getElementById('download-link').style.display = 'block';
+                  document.getElementById('download-link').href = data.downloadUrl;
+              } else {
+                  document.getElementById('log-section').innerText += "Error occurred.\n";
+              }
+          });
+    });
+</script>
+</body>
+</html>
