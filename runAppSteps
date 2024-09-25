@@ -1,0 +1,5 @@
+Open Terminal and navigate to the directory where you saved the .command file.
+Run the following command to make the file executable:
+
+bash
+chmod +x run_my_app.command
