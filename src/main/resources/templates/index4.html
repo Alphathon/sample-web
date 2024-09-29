@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Submission</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+  <h1>Submit Your Data</h1>
+  <form id="form">
+    <label for="username">Username:</label>
+    <input type="text" id="username" required><br>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" required><br>
+
+    <label for="dropdown1">Dropdown 1:</label>
+    <select id="dropdown1"></select><br>
+
+    <label for="dropdown2">Dropdown 2:</label>
+    <select id="dropdown2"></select><br><br>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="spinner" style="display:none;">Processing...</div>
+  <div id="message"></div>
+  <a id="downloadLink" href="/api/download" style="display:none;">Download Data</a>
+
+  <div>
+    <h2>Logs</h2>
+    <div id="logs"></div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Fetch dropdown values when the page loads
+      fetch('/api/dropdowns')
+          .then(response => response.json())
+          .then(data => {
+              populateDropdown('dropdown1', data.dropdown1);
+              populateDropdown('dropdown2', data.dropdown2);
+          })
+          .catch(error => {
+              console.error('Error fetching dropdown values:', error);
+          });
+
+      function populateDropdown(dropdownId, values) {
+          const dropdown = document.getElementById(dropdownId);
+          dropdown.innerHTML = ''; // Clear previous options
+          for (const key in values) {
+              const option = document.createElement('option');
+              option.value = key;
+              option.textContent = values[key];
+              dropdown.appendChild(option);
+          }
+      }
+  });
+
+  const form = document.getElementById('form');
+  const spinner = document.getElementById('spinner');
+  const message = document.getElementById('message');
+  const downloadLink = document.getElementById('downloadLink');
+  const logsDiv = document.getElementById('logs');
+
+  form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      spinner.style.display = 'block';
+      message.innerText = '';
+      downloadLink.style.display = 'none';
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const dropdown1 = document.getElementById('dropdown1').value;
+      const dropdown2 = document.getElementById('dropdown2').value;
+
+      fetch('/api/submit', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `username=${username}&password=${password}&dropdown1=${dropdown1}&dropdown2=${dropdown2}`
+      })
+      .then(response => response.text())
+      .then(result => {
+          spinner.style.display = 'none';
+          if (result === 'DATA_READY') {
+              downloadLink.style.display = 'block';
+          } else {
+              message.innerText = 'No data available';
+          }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+      });
+  });
+
+  // WebSocket connection to stream logs
+  const eventSource = new EventSource('/api/logs');
+  eventSource.onmessage = function(event) {
+      const logEntry = document.createElement('div');
+      logEntry.innerText = event.data;
+      logsDiv.appendChild(logEntry);
+  };
+</script>
+</body>
+</html>
