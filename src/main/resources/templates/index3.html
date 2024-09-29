@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Submission</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+    <h1>Submit Your Data</h1>
+    <form id="form">
+        <label for="username">Username:</label>
+        <input type="text" id="username" required><br>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" required><br>
+
+        <label for="dropdown">Options:</label>
+        <select id="dropdown">
+            <option value="option1">Option 1</option>
+            <option value="option2">Option 2</option>
+            <option value="noData">No Data</option>
+        </select><br><br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="spinner" style="display:none;">Processing...</div>
+    <div id="message"></div>
+    <a id="downloadLink" href="/api/download" style="display:none;">Download Data</a>
+
+    <div>
+        <h2>Logs</h2>
+        <div id="logs"></div>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('form');
+    const spinner = document.getElementById('spinner');
+    const message = document.getElementById('message');
+    const downloadLink = document.getElementById('downloadLink');
+    const logsDiv = document.getElementById('logs');
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        spinner.style.display = 'block';
+        message.innerText = '';
+        downloadLink.style.display = 'none';
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const dropdown = document.getElementById('dropdown').value;
+
+        fetch('/api/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `username=${username}&password=${password}&dropdown=${dropdown}`
+        })
+        .then(response => response.text())
+        .then(result => {
+            spinner.style.display = 'none';
+            if (result === 'DATA_READY') {
+                downloadLink.style.display = 'block';
+            } else {
+                message.innerText = 'No data available';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+
+    // WebSocket connection to stream logs
+    const eventSource = new EventSource('/api/logs');
+    eventSource.onmessage = function(event) {
+        const logEntry = document.createElement('div');
+        logEntry.innerText = event.data;
+        logsDiv.appendChild(logEntry);
+    };
+</script>
+</body>
+</html>
